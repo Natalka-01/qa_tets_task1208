@@ -134,7 +134,7 @@ Verify the system blocks quantities above the allowed maximum.
 **Actual Result:**  
 _Status:_ (Pass/Fail)
 
-## Test Suite 00003 ReducedPriceRule (Buy more than N, pay a different price)
+## Test Suite 00002 ReducedPriceRule (Buy more than N, pay a different price)
 
 ---
 
