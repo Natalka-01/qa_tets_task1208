@@ -1,0 +1,629 @@
+{
+	"info": {
+		"_postman_id": "74495311-3200-437b-bf40-990ffce88f6a",
+		"name": "QA Task – JSON Server API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18914666",
+		"_collection_link": "https://www.postman.com/nataliiaqa/workspace/qa-task-json-server-api/collection/18914666-74495311-3200-437b-bf40-990ffce88f6a?action=share&source=collection_link&creator=18914666"
+	},
+	"item": [
+		{
+			"name": "Posts",
+			"item": [
+				{
+					"name": "Verify all posts from database",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const posts = pm.response.json();\r",
+									"\r",
+									"// Verify at least 2 posts exist\r",
+									"pm.expect(posts.length).to.be.at.least(2);\r",
+									"\r",
+									"// Check first post\r",
+									"pm.expect(posts[0]).to.have.property(\"id\");\r",
+									"pm.expect(posts[0]).to.have.property(\"title\");\r",
+									"pm.expect(posts[0]).to.have.property(\"author\");\r",
+									"\r",
+									"// Save first post’s ID dynamically for next request\r",
+									"pm.collectionVariables.set(\"postId\", posts[0].id);\r",
+									"console.log(\"Saved postId for single post GET:\", pm.collectionVariables.get(\"postId\"));\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/posts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify single post details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const obj = pm.response.json();\r",
+									"\r",
+									"// Verify ID matches the one from GET /posts\r",
+									"pm.expect(Number(obj.id)).to.eql(Number(pm.collectionVariables.get(\"postId\")));\r",
+									"\r",
+									"// Basic checks\r",
+									"pm.expect(obj).to.have.property(\"title\");\r",
+									"pm.expect(obj).to.have.property(\"author\");\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/posts/{{postId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify a new post can be created",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set(\"dynamicTitle\", \"Post \" + Math.floor(Math.random() * 100000));\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"  pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"const json = pm.response.json();\r",
+									"\r",
+									"//  зберігаємо id для PUT/DELETE\r",
+									"pm.collectionVariables.set(\"newPostId\", json.id);\r",
+									"console.log(\"Saved newPostId:\", pm.collectionVariables.get(\"newPostId\"));\r",
+									"\r",
+									"// базові перевірки\r",
+									"pm.expect(json.title).to.eql(pm.collectionVariables.get(\"dynamicTitle\"));\r",
+									"pm.expect(json.author).to.eql(\"QA Tester\");\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"{{dynamicTitle}}\",\r\n  \"author\": \"QA Tester\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/posts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify the created post can be updated",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let updatedTitle = \"Updated Post \" + Math.floor(Math.random() * 100000);\r",
+									"pm.collectionVariables.set(\"dynamicUpdatedPostTitle\", updatedTitle);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const json = pm.response.json();\r",
+									"\r",
+									"pm.expect(String(json.id)).to.eql(String(pm.collectionVariables.get(\"newPostId\")));\r",
+									"pm.expect(json.title).to.eql(pm.collectionVariables.get(\"dynamicUpdatedPostTitle\"));\r",
+									"pm.expect(json.author).to.eql(\"QA Tester\");\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"id\": {{newPostId}},\r\n  \"title\": \"{{dynamicUpdatedPostTitle}}\",\r\n  \"author\": \"QA Tester\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/posts/{{newPostId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts",
+								"{{newPostId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify the created post can be deleted",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"DELETE returns success or already deleted\", function () {\r",
+									"    pm.expect([200, 204]).to.include(pm.response.code);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/posts/{{newPostId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts",
+								"{{newPostId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comments",
+			"item": [
+				{
+					"name": "Verify all seed comments",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Status check\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Parse array of comments\r",
+									"const comments = pm.response.json();\r",
+									"\r",
+									"// Ensure at least 1 comment exists\r",
+									"pm.expect(comments.length).to.be.at.least(1);\r",
+									"\r",
+									"// Basic checks on first comment\r",
+									"pm.expect(comments[0]).to.have.property(\"id\");\r",
+									"pm.expect(comments[0]).to.have.property(\"body\");\r",
+									"pm.expect(comments[0]).to.have.property(\"postId\");\r",
+									"\r",
+									"// Save first comment's ID dynamically for the single GET\r",
+									"pm.collectionVariables.set(\"seedCommentId\", comments[0].id);\r",
+									"console.log(\"Saved seedCommentId for single comment GET:\", pm.collectionVariables.get(\"seedCommentId\"));\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify seed comment details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Status check\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const comment = pm.response.json();\r",
+									"\r",
+									"// Verify ID matches the one saved from GET /comments\r",
+									"pm.expect(Number(comment.id)).to.eql(Number(pm.collectionVariables.get(\"seedCommentId\")));\r",
+									"\r",
+									"// Basic field checks (no hardcoded values)\r",
+									"pm.expect(comment).to.have.property(\"body\");\r",
+									"pm.expect(comment).to.have.property(\"postId\");\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/{{seedCommentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"comments",
+								"{{seedCommentId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify a new comment can be created",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set(\"dynamicCommentBody\", \"Comment \" + Math.floor(Math.random() * 100000));\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"const json = pm.response.json();\r",
+									"\r",
+									"// Save the numeric ID returned by the server\r",
+									"pm.collectionVariables.set(\"newCommentId\", json.id);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"body\": \"{{dynamicCommentBody}}\",\r\n  \"postId\": 1\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/comments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify the created comment can be updated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"const json = pm.response.json();\r",
+									"\r",
+									"pm.expect(String(json.id)).to.eql(String(pm.collectionVariables.get(\"newCommentId\")));\r",
+									"pm.expect(json.body).to.eql(pm.collectionVariables.get(\"dynamicUpdatedCommentBody\"));\r",
+									"pm.expect(json.postId).to.eql(Number(pm.collectionVariables.get(\"newCommentPostId\"))); \r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set(\r",
+									"    \"dynamicUpdatedCommentBody\",\r",
+									"    \"Updated Comment \" + Math.floor(Math.random() * 100000)\r",
+									");\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"id\": {{newCommentId}},\r\n  \"body\": \"{{dynamicUpdatedCommentBody}}\",\r\n  \"postId\": 1\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/comments/{{newCommentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"comments",
+								"{{newCommentId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify the created comment can be deleted",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Allow success (200 OK, 204 No Content) or already deleted (404)\r",
+									"pm.test(\"DELETE returns success or already deleted\", function () {\r",
+									"    pm.expect([200, 204]).to.include(pm.response.code);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/{{newCommentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"comments",
+								"{{newCommentId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "Verify profile data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 1. Status code check\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// 2. Parse the JSON response\r",
+									"const profile = pm.response.json();\r",
+									"\r",
+									"// 3. Verify expected fields exist\r",
+									"pm.test(\"Profile has name field\", function () {\r",
+									"    pm.expect(profile).to.have.property(\"name\");\r",
+									"});\r",
+									"\r",
+									"// 4. Optional: Check the name value matches db.json\r",
+									"pm.test(\"Profile name matches expected\", function () {\r",
+									"    pm.expect(profile.name).to.eql(\"typicode\"); \r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "postId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "commentId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000"
+		},
+		{
+			"key": "dynamicTitle",
+			"value": ""
+		},
+		{
+			"key": "dynamicUpdatedPostTitle",
+			"value": ""
+		},
+		{
+			"key": "newPostId",
+			"value": ""
+		},
+		{
+			"key": "seedCommentId",
+			"value": ""
+		},
+		{
+			"key": "dynamicCommentBody",
+			"value": ""
+		},
+		{
+			"key": "newCommentId",
+			"value": ""
+		},
+		{
+			"key": "dynamicUpdatedCommentBody",
+			"value": ""
+		},
+		{
+			"key": "dynamicPostTitle",
+			"value": ""
+		}
+	]
+}
